@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formula Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&family=Karla:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f1eee5;
+    --surface: #fbf9f3;
+    --surface-soft: #eae5d6;
+    --border: #ddd6c2;
+    --border-soft: #e7e1d0;
+    --text: #2e2a20;
+    --text-muted: #6c6552;
+    --text-faint: #99916e;
+
+    --accent: #4c7a6c;
+    --accent-strong: #325448;
+    --accent-soft: #e2ebe4;
+
+    --good: #4f7d5c;
+    --good-soft: #e2ecdf;
+    --warn: #a3812f;
+    --warn-soft: #f0e6c9;
+    --high: #a4632f;
+    --high-soft: #efdfcb;
+    --bad: #9c4b3d;
+    --bad-soft: #efdbd4;
+
+    --font-display: "Literata", Georgia, "Iowan Old Style", serif;
+    --font-body: "Karla", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #23201a;
+      --surface: #2b2721;
+      --surface-soft: #35302a;
+      --border: #453f34;
+      --border-soft: #3a352c;
+      --text: #ece6d6;
+      --text-muted: #b3a98d;
+      --text-faint: #857b62;
+
+      --accent: #86b6a3;
+      --accent-strong: #aed3c4;
+      --accent-soft: #2d3934;
+
+      --good: #86b393;
+      --good-soft: #2a3529;
+      --warn: #d3b263;
+      --warn-soft: #3a331f;
+      --high: #d1976a;
+      --high-soft: #3a2f22;
+      --bad: #d18f80;
+      --bad-soft: #3a2823;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #23201a;
+    --surface: #2b2721;
+    --surface-soft: #35302a;
+    --border: #453f34;
+    --border-soft: #3a352c;
+    --text: #ece6d6;
+    --text-muted: #b3a98d;
+    --text-faint: #857b62;
+
+    --accent: #86b6a3;
+    --accent-strong: #aed3c4;
+    --accent-soft: #2d3934;
+
+    --good: #86b393;
+    --good-soft: #2a3529;
+    --warn: #d3b263;
+    --warn-soft: #3a331f;
+    --high: #d1976a;
+    --high-soft: #3a2f22;
+    --bad: #d18f80;
+    --bad-soft: #3a2823;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    padding: clamp(24px, 4vw, 56px);
+    max-width: 1220px;
+    margin: 0 auto;
+  }
+  ::selection { background: var(--accent-soft); }
+  a { color: var(--accent-strong); }
+
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; color: var(--text); }
+
+  /* ---------- Header ---------- */
+  header { margin-bottom: 34px; max-width: 720px; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin-bottom: 12px;
+  }
+  header h1 { font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: -0.005em; line-height: 1.2; }
+  header p.lede {
+    color: var(--text-muted);
+    font-size: 1.02rem;
+    margin: 14px 0 0;
+  }
+  header p.lede code, .notes code, .import-hint code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--surface-soft);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  .scope-note {
+    margin-top: 20px;
+    padding-left: 14px;
+    border-left: 2px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .scope-note strong { color: var(--text); font-weight: 600; }
+
+  .import-hint {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-faint);
+  }
+
+  /* ---------- Panels grid ---------- */
+  .bench { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 26px; align-items: start; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(40, 34, 20, 0.04), 0 8px 24px -12px rgba(40, 34, 20, 0.10);
+  }
+  .panel-head { padding: 22px 24px 16px; }
+  .panel-head h2 { font-size: 1.22rem; }
+  .panel-head .sub { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); margin-top: 5px; letter-spacing: 0.01em; }
+
+  .presets { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .preset-btn {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 7px 13px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
+  .preset-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 600; }
+  .preset-btn:focus-visible, .import-btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .import-btn {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 7px 13px;
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+  .import-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  /* ---------- Inputs ---------- */
+  .inputs { padding: 8px 24px 4px; }
+  .period-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+  .period-col-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 10px;
+  }
+  .period-col-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .period-col-head .import-btn { padding: 3px 8px; font-size: 0.68rem; }
+
+  .field { margin-bottom: 11px; }
+  .field label { display: block; font-size: 0.76rem; color: var(--text-muted); margin-bottom: 4px; }
+  .field input {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.87rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    padding: 7px 9px;
+  }
+  .field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { opacity: 0.4; }
+
+  .import-status { font-size: 0.78rem; margin: 4px 0 10px; min-height: 1.1em; }
+  .import-status.ok { color: var(--good); }
+  .import-status.error { color: var(--bad); }
+
+  /* ---------- Readout ---------- */
+  .readout {
+    margin: 18px 24px 24px;
+    background: var(--surface-soft);
+    border-radius: 12px;
+    padding: 20px 22px 22px;
+    transition: background 0.25s ease;
+  }
+  .readout.tone-good { background: var(--good-soft); }
+  .readout.tone-warn { background: var(--warn-soft); }
+  .readout.tone-high { background: var(--high-soft); }
+  .readout.tone-bad  { background: var(--bad-soft); }
+
+  .readout-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+  .readout-score-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-faint); }
+  .readout-score {
+    font-family: var(--font-mono);
+    font-size: clamp(2rem, 3.6vw, 2.4rem);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-top: 5px;
+    color: var(--text);
+  }
+  .readout-status {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-top: 4px;
+    white-space: nowrap;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+  .tone-good .readout-status, .tone-good .readout-score { color: var(--good); }
+  .tone-warn .readout-status, .tone-warn .readout-score { color: var(--warn); }
+  .tone-high .readout-status, .tone-high .readout-score { color: var(--high); }
+  .tone-bad  .readout-status, .tone-bad  .readout-score { color: var(--bad); }
+
+  .readout-caption { font-size: 0.8rem; color: var(--text-muted); margin: 10px 0 0; max-width: 46ch; }
+
+  .ratio-rows { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .ratio-row { display: grid; grid-template-columns: 54px 1fr 58px; align-items: center; gap: 10px; }
+  .ratio-name { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+  .ratio-track { position: relative; height: 6px; background: rgba(46, 42, 32, 0.08); border-radius: 3px; }
+  .ratio-fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
+  .ratio-baseline { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text-faint); left: 33.33%; }
+  .ratio-val { font-family: var(--font-mono); font-size: 0.72rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+
+  .pillar-rows { margin-top: 18px; display: flex; flex-direction: column; gap: 11px; }
+  .pillar-row { display: grid; grid-template-columns: 92px 1fr 42px; align-items: center; gap: 10px; }
+  .pillar-name { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); }
+  .pillar-track { height: 7px; background: rgba(46, 42, 32, 0.08); border-radius: 4px; overflow: hidden; }
+  .pillar-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  .pillar-val { font-family: var(--font-mono); font-size: 0.76rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+
+  .stat-rows { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border-soft); }
+  .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .stat-name { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); }
+  .stat-val { font-family: var(--font-mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--text); }
+  .stat-val.neg { color: var(--bad); }
+
+  .notes { margin-top: 16px; font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid var(--border-soft); padding-top: 12px; }
+  .notes div + div { margin-top: 5px; }
+
+  footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 0.83rem;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  footer code { font-family: var(--font-mono); background: var(--surface-soft); padding: 1px 6px; border-radius: 4px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Formula Bench · Multi-Agent Decision Engine</div>
+  <h1>The three calculators the Financial Analyst agent is allowed to use</h1>
+  <p class="lede">
+    Everything here is ordinary, deterministic arithmetic — the Beneish
+    M-Score, Altman Z''-Score, and ESG composite functions from
+    <code>tools/formulas.py</code>, ported line-for-line. No model call happens
+    between an input changing and a score updating below.
+  </p>
+  <div class="scope-note">
+    <strong>Scope.</strong> This is the scoring core only. The full engine also
+    has a Data Engineer agent fetching these figures from records, a
+    Risk/Critic agent with independent hard-gate checks that can escalate or
+    reject a result, real API-key authorization, a durable job queue, and a
+    hash-chained audit ledger — none of that machinery runs on this page.
+  </div>
+  <p class="import-hint">
+    Each panel below also reads a data file, if you'd rather import figures
+    than type them — <code>JSON</code>, or CSV as <code>field,value</code>
+    rows or one header row plus one data row. Column names are matched
+    loosely (a column called "Total Revenue" is understood as revenue).
+  </p>
+</header>
+
+<div class="bench">
+
+  <!-- ============ FRAUD RISK PANEL ============ -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Fraud Risk — Beneish M-Score</h2>
+      <div class="sub">Beneish (1999) · 8-ratio earnings-manipulation screen</div>
+      <div class="presets">
+        <button class="preset-btn active" data-panel="b" data-preset="clean">Example: clean company</button>
+        <button class="preset-btn" data-panel="b" data-preset="fraud">Example: manipulation signature</button>
+      </div>
+    </div>
+
+    <div class="inputs">
+      <div class="period-cols">
+        <div>
+          <div class="period-col-head">
+            <span class="period-col-label">Current FY</span>
+            <button class="import-btn" id="import-btn-b-cur" title="Accepts JSON or CSV (field,value rows, or one header row + one data row)">Import file…</button>
+            <input type="file" id="file-b-cur" hidden accept=".json,.csv,text/csv,application/json">
+          </div>
+          <div id="b-cur-fields"></div>
+        </div>
+        <div>
+          <div class="period-col-head">
+            <span class="period-col-label">Prior FY</span>
+            <button class="import-btn" id="import-btn-b-prior" title="Accepts JSON or CSV (field,value rows, or one header row + one data row)">Import file…</button>
+            <input type="file" id="file-b-prior" hidden accept=".json,.csv,text/csv,application/json">
+          </div>
+          <div id="b-prior-fields"></div>
+        </div>
+      </div>
+      <div class="import-status" id="status-b"></div>
+    </div>
+
+    <div class="readout" id="readout-b">
+      <div class="readout-top">
+        <div>
+          <div class="readout-score-label">M-Score</div>
+          <div class="readout-score" id="b-score">—</div>
+        </div>
+        <div class="readout-status" id="b-status"><span class="status-dot"></span><span id="b-status-text">—</span></div>
+      </div>
+      <p class="readout-caption">Published threshold: M &gt; −1.78 flags elevated manipulation probability. This is a screen, not proof — real deployments treat it as one input for the Risk/Critic agent, not a verdict.</p>
+
+      <div class="ratio-rows" id="b-ratios"></div>
+
+      <div class="notes">
+        <div>Bars show each ratio's distance from 1.0 (no year-over-year change); reference tick at 1.0.</div>
+        <div>LVGI uses total liabilities ÷ total assets — a simplification of the original current-liabilities/long-term-debt split, since that split isn't in the demo's source schema.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINANCIAL DISTRESS PANEL ============ -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Financial Distress — Altman Z''-Score</h2>
+      <div class="sub">Altman, Hartzell &amp; Peck (1995) · private-firm variant</div>
+      <div class="presets">
+        <button class="preset-btn active" data-panel="a" data-preset="safe">Example: healthy balance sheet</button>
+        <button class="preset-btn" data-panel="a" data-preset="distress">Example: distressed</button>
+        <button class="import-btn" id="import-btn-a" title="Accepts JSON or CSV (field,value rows, or one header row + one data row)">Import file…</button>
+        <input type="file" id="file-a" hidden accept=".json,.csv,text/csv,application/json">
+      </div>
+    </div>
+
+    <div class="inputs">
+      <div id="a-fields"></div>
+      <div class="import-status" id="status-a"></div>
+    </div>
+
+    <div class="readout" id="readout-a">
+      <div class="readout-top">
+        <div>
+          <div class="readout-score-label">Z''-Score</div>
+          <div class="readout-score" id="a-score">—</div>
+        </div>
+        <div class="readout-status" id="a-status"><span class="status-dot"></span><span id="a-status-text">—</span></div>
+      </div>
+      <p class="readout-caption">Zones: Z'' &gt; 2.6 safe · 1.1–2.6 grey · ≤ 1.1 distress. Point-in-time solvency, not a year-over-year comparison — independent of the fraud signal at left; a company can trip either gate without tripping the other.</p>
+
+      <div class="stat-rows" id="a-ratios"></div>
+
+      <div class="notes" id="a-notes"></div>
+    </div>
+  </section>
+
+  <!-- ============ ESG PANEL ============ -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>ESG Composite Score</h2>
+      <div class="sub">Weighted band-rubric · E 0.40 / S 0.30 / G 0.30</div>
+      <div class="presets">
+        <button class="preset-btn active" data-panel="e" data-preset="good">Example: strong ESG profile</button>
+        <button class="preset-btn" data-panel="e" data-preset="bad">Example: weak ESG profile</button>
+        <button class="import-btn" id="import-btn-e" title="Accepts JSON or CSV (field,value rows, or one header row + one data row)">Import file…</button>
+        <input type="file" id="file-e" hidden accept=".json,.csv,text/csv,application/json">
+      </div>
+    </div>
+
+    <div class="inputs">
+      <div id="e-fields"></div>
+      <div class="import-status" id="status-e"></div>
+    </div>
+
+    <div class="readout" id="readout-e">
+      <div class="readout-top">
+        <div>
+          <div class="readout-score-label">Composite / 100</div>
+          <div class="readout-score" id="e-score">—</div>
+        </div>
+        <div class="readout-status" id="e-status"><span class="status-dot"></span><span id="e-status-text">—</span></div>
+      </div>
+      <p class="readout-caption">Rating bands mirror commercial ESG raters: bucket each disclosed KPI against a threshold, weight the three pillars, map the composite onto a letter band.</p>
+
+      <div class="pillar-rows" id="e-pillars"></div>
+
+      <div class="notes" id="e-notes"></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <span>Formulas ported from <code>app/tools/formulas.py</code> — the same functions the orchestration graph calls, no reimplementation drift.</span>
+  <span>Edit any field, or import a file, to recompute live.</span>
+</footer>
+
+<script>
+  // =====================================================================
+  // Direct ports of app/tools/formulas.py. Field names mirror the Python
+  // Pydantic models so this stays a faithful demo of the actual scoring
+  // core, not a reimplementation that could drift from it.
+  // =====================================================================
+
+  function bandScore(value, thresholds) {
+    if (value <= thresholds[0][0]) return thresholds[0][1];
+    const last = thresholds[thresholds.length - 1];
+    if (value >= last[0]) return last[1];
+    for (let i = 0; i < thresholds.length - 1; i++) {
+      const [b0, s0] = thresholds[i], [b1, s1] = thresholds[i + 1];
+      if (value >= b0 && value <= b1) {
+        const span = (b1 - b0) || 1;
+        return s0 + (s1 - s0) * ((value - b0) / span);
+      }
+    }
+    return last[1];
+  }
+
+  function beneishMScore(cur, prior) {
+    const dsri = (cur.receivables / cur.revenue) / (prior.receivables / prior.revenue);
+
+    const priorGM = (prior.revenue - prior.cogs) / prior.revenue;
+    const curGM = (cur.revenue - cur.cogs) / cur.revenue;
+    const gmi = curGM !== 0 ? priorGM / curGM : Infinity;
+
+    const priorAqiBase = 1 - (prior.currentAssets + prior.ppeNet) / prior.totalAssets;
+    const curAqiBase = 1 - (cur.currentAssets + cur.ppeNet) / cur.totalAssets;
+    const aqi = priorAqiBase !== 0 ? curAqiBase / priorAqiBase : Infinity;
+
+    const sgi = cur.revenue / prior.revenue;
+
+    const priorDepiRate = (prior.ppeNet + prior.depreciation) ? prior.depreciation / (prior.ppeNet + prior.depreciation) : 0;
+    const curDepiRate = (cur.ppeNet + cur.depreciation) ? cur.depreciation / (cur.ppeNet + cur.depreciation) : 0;
+    const depi = curDepiRate !== 0 ? priorDepiRate / curDepiRate : Infinity;
+
+    const sgai = (cur.sga / cur.revenue) / (prior.sga / prior.revenue);
+
+    const tata = (cur.netIncome - cur.ocf) / cur.totalAssets;
+
+    const priorLev = prior.totalLiabilities / prior.totalAssets;
+    const curLev = cur.totalLiabilities / cur.totalAssets;
+    const lvgi = priorLev !== 0 ? curLev / priorLev : Infinity;
+
+    const m = -4.84
+      + 0.920 * dsri + 0.528 * gmi + 0.404 * aqi + 0.892 * sgi
+      + 0.115 * depi - 0.172 * sgai + 4.679 * tata - 0.327 * lvgi;
+
+    const flagged = m > -1.78;
+    let riskLevel;
+    if (flagged) riskLevel = m > -1.0 ? "critical" : "high";
+    else riskLevel = m > -2.5 ? "medium" : "low";
+
+    return {
+      m, flagged, riskLevel,
+      ratios: { DSRI: dsri, GMI: gmi, AQI: aqi, SGI: sgi, DEPI: depi, SGAI: sgai, TATA: tata, LVGI: lvgi },
+    };
+  }
+
+  function altmanZScore(p) {
+    const x1 = (p.currentAssets - p.currentLiabilities) / p.totalAssets;
+    const x2 = p.retainedEarnings / p.totalAssets;
+    const x3 = p.ebit / p.totalAssets;
+    const bookEquity = p.totalAssets - p.totalLiabilities;
+    const x4 = p.totalLiabilities !== 0 ? bookEquity / p.totalLiabilities : Infinity;
+
+    const z = 6.56 * x1 + 3.26 * x2 + 6.72 * x3 + 1.05 * x4;
+
+    let zone;
+    if (z > 2.6) zone = "safe";
+    else if (z > 1.1) zone = "grey";
+    else zone = "distress";
+
+    return {
+      z, zone,
+      ratios: {
+        "X1 working capital / assets": x1,
+        "X2 retained earnings / assets": x2,
+        "X3 EBIT / assets": x3,
+        "X4 book equity / liabilities": x4,
+      },
+    };
+  }
+
+  function esgComposite(d) {
+    const notes = [];
+    const emissionsIntensity = (d.scope1 + d.scope2) / (d.revenue / 1_000_000);
+    const environmental = bandScore(emissionsIntensity, [[50, 100], [150, 70], [400, 40], [1000, 10]]);
+
+    const injuryScore = bandScore(d.injuryRate, [[0.5, 100], [2.0, 70], [5.0, 40], [10.0, 10]]);
+    const controversyPenalty = Math.min(d.controversyCount * 15, 60);
+    const social = Math.max(injuryScore - controversyPenalty, 0);
+    if (controversyPenalty > 0) {
+      notes.push(`Social score reduced by ${controversyPenalty} points for ${d.controversyCount} recorded controversy flag(s).`);
+    }
+
+    const governance = bandScore(d.boardIndependence, [[30, 10], [50, 40], [70, 70], [90, 100]]);
+
+    const composite = 0.4 * environmental + 0.3 * social + 0.3 * governance;
+    let rating;
+    if (composite >= 80) rating = "AAA";
+    else if (composite >= 65) rating = "AA";
+    else if (composite >= 50) rating = "A";
+    else if (composite >= 35) rating = "BB";
+    else if (composite >= 20) rating = "B";
+    else rating = "CCC";
+
+    return { composite, rating, pillars: { Environmental: environmental, Social: social, Governance: governance }, notes };
+  }
+
+  // ---------------------------------------------------------------------
+  // Field schemas + example presets, matching scenarios validated against
+  // the Python implementation while building the backend.
+  // ---------------------------------------------------------------------
+
+  const beneishFields = [
+    ["revenue", "Revenue ($)"], ["cogs", "COGS ($)"], ["netIncome", "Net income ($)"],
+    ["totalAssets", "Total assets ($)"], ["currentAssets", "Current assets ($)"],
+    ["ppeNet", "PP&E, net ($)"], ["totalLiabilities", "Total liabilities ($)"],
+    ["receivables", "Receivables ($)"], ["depreciation", "Depreciation ($)"],
+    ["sga", "SG&A expense ($)"], ["ocf", "Operating cash flow ($)"],
+  ];
+
+  const altmanFields = [
+    ["currentAssets", "Current assets ($)"], ["currentLiabilities", "Current liabilities ($)"],
+    ["totalAssets", "Total assets ($)"], ["totalLiabilities", "Total liabilities ($)"],
+    ["retainedEarnings", "Retained earnings ($)"], ["ebit", "EBIT ($)"],
+  ];
+
+  const esgFields = [
+    ["revenue", "Revenue ($)"], ["scope1", "Scope 1 emissions (tCO2e)"], ["scope2", "Scope 2 emissions (tCO2e)"],
+    ["boardIndependence", "Board independence (%)"], ["injuryRate", "Workforce injury rate (per 200k hrs)"],
+    ["controversyCount", "Controversy flags (count)"],
+  ];
+
+  const beneishPresets = {
+    clean: {
+      current: { revenue: 1050000, cogs: 630000, netIncome: 84000, totalAssets: 930000, currentAssets: 410000, ppeNet: 310000, totalLiabilities: 460000, receivables: 126000, depreciation: 42000, sga: 157000, ocf: 98000 },
+      prior:   { revenue: 1000000, cogs: 600000, netIncome: 80000, totalAssets: 900000, currentAssets: 400000, ppeNet: 300000, totalLiabilities: 450000, receivables: 120000, depreciation: 40000, sga: 150000, ocf: 95000 },
+    },
+    fraud: {
+      current: { revenue: 1400000, cogs: 1100000, netIncome: 250000, totalAssets: 1000000, currentAssets: 500000, ppeNet: 150000, totalLiabilities: 520000, receivables: 420000, depreciation: 10000, sga: 90000, ocf: -40000 },
+      prior:   { revenue: 1000000, cogs: 600000, netIncome: 80000, totalAssets: 900000, currentAssets: 400000, ppeNet: 300000, totalLiabilities: 450000, receivables: 120000, depreciation: 40000, sga: 150000, ocf: 95000 },
+    },
+  };
+
+  const altmanPresets = {
+    safe: { currentAssets: 410000, currentLiabilities: 230000, totalAssets: 930000, totalLiabilities: 460000, retainedEarnings: 300000, ebit: 110000 },
+    distress: { currentAssets: 250000, currentLiabilities: 380000, totalAssets: 900000, totalLiabilities: 560000, retainedEarnings: -280000, ebit: -170000 },
+  };
+
+  const esgPresets = {
+    good: { revenue: 1050000, scope1: 10, scope2: 15, boardIndependence: 85, injuryRate: 0.3, controversyCount: 0 },
+    bad:  { revenue: 1050000, scope1: 600, scope2: 500, boardIndependence: 25, injuryRate: 8.0, controversyCount: 3 },
+  };
+
+  // ---------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------
+
+  function buildFields(container, fields, prefix, values, onChange) {
+    container.innerHTML = fields.map(([key, label]) => `
+      <div class="field">
+        <label for="${prefix}-${key}">${label}</label>
+        <input type="number" step="any" id="${prefix}-${key}" value="${values[key]}">
+      </div>
+    `).join("");
+    fields.forEach(([key]) => {
+      document.getElementById(`${prefix}-${key}`).addEventListener("input", onChange);
+    });
+  }
+
+  function readFields(fields, prefix) {
+    const out = {};
+    fields.forEach(([key]) => { out[key] = parseFloat(document.getElementById(`${prefix}-${key}`).value) || 0; });
+    return out;
+  }
+
+  const toneClass = { low: "good", medium: "warn", high: "high", critical: "bad", safe: "good", grey: "warn", distress: "bad", AAA: "good", AA: "good", A: "good", BB: "warn", B: "high", CCC: "bad" };
+
+  function setTone(readoutEl, key) {
+    readoutEl.className = `readout tone-${toneClass[key] || "good"}`;
+  }
+
+  function fmt(n, digits = 4) {
+    if (!isFinite(n)) return "∞";
+    return n.toFixed(digits);
+  }
+
+  function recomputeBeneish() {
+    const cur = readFields(beneishFields, "b-cur");
+    const prior = readFields(beneishFields, "b-prior");
+    const r = beneishMScore(cur, prior);
+
+    document.getElementById("b-score").textContent = fmt(r.m, 2);
+    document.getElementById("b-status-text").textContent = `${r.flagged ? "Flagged" : "Not flagged"} · ${r.riskLevel}`;
+    setTone(document.getElementById("readout-b"), r.riskLevel);
+
+    const rows = Object.entries(r.ratios);
+    document.getElementById("b-ratios").innerHTML = rows.map(([name, val]) => {
+      const clamped = Math.max(0, Math.min(3, isFinite(val) ? val : 3));
+      const pct = (clamped / 3) * 100;
+      return `
+        <div class="ratio-row">
+          <div class="ratio-name">${name}</div>
+          <div class="ratio-track">
+            <div class="ratio-baseline"></div>
+            <div class="ratio-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="ratio-val">${fmt(val, 2)}</div>
+        </div>`;
+    }).join("");
+  }
+
+  function recomputeAltman() {
+    const p = readFields(altmanFields, "a");
+    const r = altmanZScore(p);
+
+    document.getElementById("a-score").textContent = fmt(r.z, 2);
+    document.getElementById("a-status-text").textContent = r.zone;
+    setTone(document.getElementById("readout-a"), r.zone);
+
+    document.getElementById("a-ratios").innerHTML = Object.entries(r.ratios).map(([name, val]) => `
+      <div class="stat-row">
+        <div class="stat-name">${name}</div>
+        <div class="stat-val${val < 0 ? " neg" : ""}">${fmt(val, 4)}</div>
+      </div>`).join("");
+
+    document.getElementById("a-notes").innerHTML =
+      `<div>Private-firm variant: uses book value of equity (total assets − total liabilities), not market value — a private counterparty has no traded share price.</div>`;
+  }
+
+  function recomputeEsg() {
+    const d = readFields(esgFields, "e");
+    const r = esgComposite(d);
+
+    document.getElementById("e-score").textContent = fmt(r.composite, 1);
+    document.getElementById("e-status-text").textContent = `Rating ${r.rating}`;
+    setTone(document.getElementById("readout-e"), r.rating);
+
+    document.getElementById("e-pillars").innerHTML = Object.entries(r.pillars).map(([name, val]) => `
+      <div class="pillar-row">
+        <div class="pillar-name">${name}</div>
+        <div class="pillar-track"><div class="pillar-fill" style="width:${Math.max(0, Math.min(100, val))}%"></div></div>
+        <div class="pillar-val">${fmt(val, 1)}</div>
+      </div>`).join("");
+
+    document.getElementById("e-notes").innerHTML = r.notes.length
+      ? r.notes.map(n => `<div>${n}</div>`).join("")
+      : `<div>No composite adjustments triggered.</div>`;
+  }
+
+  function setPreset(panel, preset) {
+    document.querySelectorAll(`.preset-btn[data-panel="${panel}"]`).forEach(b => {
+      b.classList.toggle("active", b.dataset.preset === preset);
+    });
+    if (panel === "b") {
+      const p = beneishPresets[preset];
+      buildFields(document.getElementById("b-cur-fields"), beneishFields, "b-cur", p.current, recomputeBeneish);
+      buildFields(document.getElementById("b-prior-fields"), beneishFields, "b-prior", p.prior, recomputeBeneish);
+      recomputeBeneish();
+    } else if (panel === "a") {
+      const p = altmanPresets[preset];
+      buildFields(document.getElementById("a-fields"), altmanFields, "a", p, recomputeAltman);
+      recomputeAltman();
+    } else {
+      const p = esgPresets[preset];
+      buildFields(document.getElementById("e-fields"), esgFields, "e", p, recomputeEsg);
+      recomputeEsg();
+    }
+  }
+
+  document.querySelectorAll(".preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => setPreset(btn.dataset.panel, btn.dataset.preset));
+  });
+
+  // ---------------------------------------------------------------------
+  // File import: JSON, or CSV as "field,value" rows, or one header row
+  // plus one data row. Column names are matched loosely via alias lookup
+  // so a spreadsheet export's own headers ("Total Revenue", "Net Income")
+  // don't have to be hand-edited to match this page's internal field names.
+  // ---------------------------------------------------------------------
+
+  const FIELD_ALIASES = {
+    revenue: ["revenue", "totalrevenue", "netrevenue", "sales", "totalsales"],
+    cogs: ["cogs", "costofgoodssold", "costofsales"],
+    netIncome: ["netincome", "ni", "netprofit", "profit"],
+    totalAssets: ["totalassets", "assets"],
+    currentAssets: ["currentassets"],
+    currentLiabilities: ["currentliabilities"],
+    ppeNet: ["ppenet", "ppe", "netppe", "propertyplantequipment", "ppandenet"],
+    totalLiabilities: ["totalliabilities", "liabilities"],
+    retainedEarnings: ["retainedearnings", "retainedincome"],
+    ebit: ["ebit", "operatingincome", "earningsbeforeinterestandtax"],
+    receivables: ["receivables", "accountsreceivable", "ar"],
+    depreciation: ["depreciation", "depreciationexpense"],
+    sga: ["sga", "sgaexpense", "sellinggeneralandadministrative", "sellinggeneraladministrativeexpense"],
+    ocf: ["ocf", "operatingcashflow", "cashflowfromoperations", "cfo"],
+    scope1: ["scope1", "scope1emissions", "scope1emissionstco2e", "scope1tco2e"],
+    scope2: ["scope2", "scope2emissions", "scope2emissionstco2e", "scope2tco2e"],
+    boardIndependence: ["boardindependence", "boardindependencepct", "independentboardpct", "boardindependencepercent"],
+    injuryRate: ["injuryrate", "workforceinjuryrate"],
+    controversyCount: ["controversycount", "controversyflagcount", "controversyflags"],
+  };
+
+  const ALIAS_LOOKUP = {};
+  for (const [canonical, aliases] of Object.entries(FIELD_ALIASES)) {
+    ALIAS_LOOKUP[canonical.toLowerCase()] = canonical;
+    for (const a of aliases) ALIAS_LOOKUP[a] = canonical;
+  }
+
+  function normalizeKey(k) {
+    return String(k).toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  function resolveField(rawKey) {
+    return ALIAS_LOOKUP[normalizeKey(rawKey)] || null;
+  }
+
+  function parseDataFile(text) {
+    const result = { values: {}, ignored: [] };
+
+    try {
+      const obj = JSON.parse(text);
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        for (const [k, v] of Object.entries(obj)) {
+          const field = resolveField(k);
+          const num = typeof v === "number" ? v : parseFloat(v);
+          if (field && isFinite(num)) result.values[field] = num;
+          else result.ignored.push(k);
+        }
+        return result;
+      }
+    } catch (e) { /* not JSON -- fall through to CSV */ }
+
+    const rows = text.trim().split(/\r?\n/).map(line => line.split(",").map(c => c.trim()));
+    if (rows.length === 0 || (rows.length === 1 && rows[0].length === 1 && !rows[0][0])) return result;
+
+    if (rows.every(r => r.length === 2)) {
+      for (const [k, v] of rows) {
+        const field = resolveField(k);
+        const num = parseFloat(v);
+        if (field && isFinite(num)) result.values[field] = num;
+        else if (k) result.ignored.push(k);
+      }
+      return result;
+    }
+
+    if (rows.length === 2 && rows[0].length === rows[1].length) {
+      const [headers, values] = rows;
+      headers.forEach((h, i) => {
+        const field = resolveField(h);
+        const num = parseFloat(values[i]);
+        if (field && isFinite(num)) result.values[field] = num;
+        else if (h) result.ignored.push(h);
+      });
+      return result;
+    }
+
+    throw new Error('Unrecognized shape — expected JSON, "field,value" lines, or one header row plus one data row.');
+  }
+
+  function wireImport(fileInputId, fields, prefix, statusId, onChange) {
+    document.getElementById(fileInputId).addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      const statusEl = document.getElementById(statusId);
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const { values, ignored } = parseDataFile(text);
+        const known = new Set(fields.map(([k]) => k));
+        let applied = 0;
+        for (const [key, val] of Object.entries(values)) {
+          if (known.has(key)) {
+            const input = document.getElementById(`${prefix}-${key}`);
+            if (input) { input.value = val; applied++; }
+          }
+        }
+        if (applied === 0) throw new Error("No fields in this file matched this panel.");
+        statusEl.textContent = `Loaded ${applied} field(s) from "${file.name}"` + (ignored.length ? ` — ignored: ${ignored.join(", ")}` : "");
+        statusEl.className = "import-status ok";
+        onChange();
+      } catch (err) {
+        statusEl.textContent = `Couldn't import "${file.name}": ${err.message}`;
+        statusEl.className = "import-status error";
+      } finally {
+        e.target.value = "";
+      }
+    });
+  }
+
+  wireImport("file-b-cur", beneishFields, "b-cur", "status-b", recomputeBeneish);
+  wireImport("file-b-prior", beneishFields, "b-prior", "status-b", recomputeBeneish);
+  wireImport("file-a", altmanFields, "a", "status-a", recomputeAltman);
+  wireImport("file-e", esgFields, "e", "status-e", recomputeEsg);
+
+  document.getElementById("import-btn-b-cur").addEventListener("click", () => document.getElementById("file-b-cur").click());
+  document.getElementById("import-btn-b-prior").addEventListener("click", () => document.getElementById("file-b-prior").click());
+  document.getElementById("import-btn-a").addEventListener("click", () => document.getElementById("file-a").click());
+  document.getElementById("import-btn-e").addEventListener("click", () => document.getElementById("file-e").click());
+
+  setPreset("b", "clean");
+  setPreset("a", "safe");
+  setPreset("e", "good");
+</script>
+</body>
+</html>
