@@ -1,0 +1,23 @@
+# --- API layer ---
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.7.0
+
+# --- Orchestration ---
+langgraph==0.6.6
+langgraph-checkpoint-postgres==2.0.21
+# langgraph-checkpoint-postgres depends on `psycopg` (psycopg3), which needs
+# either a system libpq install or this binary wheel. Pinning the binary
+# extra here avoids a "no pq wrapper available" ImportError on hosts
+# without libpq-dev preinstalled (most minimal container base images).
+psycopg[binary]>=3.2,<4.0
+langchain-anthropic==0.3.10
+langchain-core>=0.3.45,<0.4
+
+# --- Data layer ---
+asyncpg==0.30.0
+
+# --- Observability / misc ---
+structlog==24.4.0
+python-dotenv==1.0.1

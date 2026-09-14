@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Only needed to run tests/test_integration.py (ASGITransport drives the
+# real FastAPI app in-process against a scratch Postgres database).
+httpx==0.28.1
