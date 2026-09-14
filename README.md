@@ -9,12 +9,13 @@ next agent runs, the log cannot be edited after the fact, every request is
 attributable to an authenticated identity, and no single signal or database
 credential can unilaterally clear or convict a counterparty.
 
-**Try the scoring core live:** [Formula Bench](https://claude.ai/code/artifact/05eaa4f8-afcf-42a0-a92b-09583de2a50d)
-is an interactive, browser-based port of the Beneish M-Score and ESG
-composite functions from `tools/formulas.py` — no server, no API key. It
-predates the Altman Z''-Score signal added below, so treat it as a demo of
-the scoring-core *pattern* (deterministic math, no LLM arithmetic), not a
-complete mirror of the current backend.
+**Try the scoring core live:** [Formula Bench](https://adithyag11.github.io/multi-agent-decision-engine/)
+is an interactive, browser-based port of the Beneish M-Score, Altman
+Z''-Score, and ESG composite functions from `tools/formulas.py` — no
+server, no API key, cross-validated field-for-field against the Python
+source. It also accepts a data file (JSON or CSV) if you'd rather import
+figures than type them. It's the scoring-core demo only — see the scope
+note on the page for what the full backend adds around it.
 
 ## 1. System Architecture
 
